@@ -1,6 +1,7 @@
 package io.github.sefiraat.networks.utils;
 
 import io.github.sefiraat.networks.network.stackcaches.ItemStackCache;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.data.persistent.PersistentDataAPI;
 import lombok.experimental.UtilityClass;
@@ -38,6 +39,11 @@ public class StackUtils {
         ItemStack clone = itemStack.clone();
         clone.setAmount(amount);
         return clone;
+    }
+
+    @Nonnull
+    public static ItemStack getAsQuantity(@Nonnull SlimefunItemStack itemStack, int amount) {
+        return getAsQuantity(itemStack.item(), amount);
     }
 
     public static boolean itemsMatch(@Nullable ItemStack itemStack1, @Nullable ItemStack itemStack2) {
@@ -268,7 +274,7 @@ public class StackUtils {
 
         // Potion
         if (metaOne instanceof PotionMeta instanceOne && metaTwo instanceof PotionMeta instanceTwo) {
-            if (!instanceOne.getBasePotionData().equals(instanceTwo.getBasePotionData())) {
+            if (!instanceOne.getBasePotionType().equals(instanceTwo.getBasePotionType())) {
                 return true;
             }
             if (instanceOne.hasCustomEffects() != instanceTwo.hasCustomEffects()) {

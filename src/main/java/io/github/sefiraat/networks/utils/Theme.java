@@ -34,7 +34,7 @@ public enum Theme {
     GUIDE(ChatColor.of("#444444"), "Guide");
 
     @Getter
-    protected static final Theme[] cachedValues = values();
+    private static final Theme[] cachedValues = values();
     private final ChatColor color;
     private final String loreLine;
 
@@ -132,7 +132,7 @@ public enum Theme {
         }
         finalLore.add("");
         finalLore.add(applyThemeToString(Theme.CLICK_INFO, themeType.getLoreLine()));
-        return new CustomItemStack(
+        return CustomItemStack.create(
             material,
             Theme.applyThemeToString(themeType, name),
             finalLore.toArray(new String[finalLore.size() - 1])
