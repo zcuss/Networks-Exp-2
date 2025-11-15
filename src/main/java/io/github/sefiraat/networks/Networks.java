@@ -45,6 +45,7 @@ public class Networks extends JavaPlugin implements SlimefunAddon {
 
         getLogger().info("########################################");
         getLogger().info("         Networks - By Sefiraat         ");
+        getLogger().info("     Changed by mmmjjkx and balugaq     ");
         getLogger().info("########################################");
 
         saveDefaultConfig();

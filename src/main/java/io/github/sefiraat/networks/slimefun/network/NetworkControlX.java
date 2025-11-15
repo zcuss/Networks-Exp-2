@@ -5,6 +5,7 @@ import dev.sefiraat.sefilib.world.LocationUtils;
 import io.github.bakedlibs.dough.blocks.BlockPosition;
 import io.github.sefiraat.networks.NetworkStorage;
 import io.github.sefiraat.networks.Networks;
+import io.github.sefiraat.networks.listeners.BlockStateRefreshListener;
 import io.github.sefiraat.networks.network.NodeDefinition;
 import io.github.sefiraat.networks.network.NodeType;
 import io.github.sefiraat.networks.utils.ItemCreator;
@@ -13,19 +14,23 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.libraries.dough.protection.Interaction;
 import io.github.thebusybiscuit.slimefun4.libraries.paperlib.PaperLib;
 import io.github.thebusybiscuit.slimefun4.libraries.paperlib.features.blockstatesnapshot.BlockStateSnapshotResult;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
+import org.bukkit.craftbukkit.CraftChunk;
+import org.bukkit.craftbukkit.block.CraftBlock;
+import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
@@ -33,7 +38,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 public class NetworkControlX extends NetworkDirectional {
 
@@ -121,33 +125,36 @@ public class NetworkControlX extends NetworkDirectional {
             return;
         }
 
-        final UUID uuid = UUID.fromString(BlockStorage.getLocationInfo(blockMenu.getLocation(), OWNER_KEY));
-        final OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
-
-        if (!Slimefun.getProtectionManager().hasPermission(offlinePlayer, targetBlock, Interaction.BREAK_BLOCK)) {
-            return;
-        }
-
         final ItemStack resultStack = new ItemStack(material, 1);
 
-        definition.getNode().getRoot().addItemStack(resultStack);
+        definition.getNode().getRoot().addItemStack0(blockMenu.getLocation(), resultStack);
 
         if (resultStack.getAmount() == 0) {
-            this.blockCache.add(targetPosition);
-            Bukkit.getScheduler().runTask(Networks.getInstance(), bukkitTask -> {
-                final BlockStateSnapshotResult blockState = PaperLib.getBlockState(targetBlock, true);
+            final BlockState blockState = BlockStateRefreshListener.getState(targetBlock);
 
-                if (blockState.getState() instanceof InventoryHolder) {
+            CraftBlock cb = (CraftBlock) targetBlock;
+            LevelAccessor level = ((CraftBlock) targetBlock).getHandle();
+            CraftChunk chunk = (CraftChunk) cb.getChunk();
+            LevelLightEngine engine = level.getLightEngine();
+
+            this.blockCache.add(targetPosition);
+
+            Bukkit.getScheduler().runTask(Networks.getInstance(), bukkitTask -> {
+                if (blockState instanceof InventoryHolder) {
                     return;
                 }
 
-                targetBlock.setType(Material.AIR, true);
+                level.getMinecraftWorld().removeBlockEntity(cb.getPosition());
+                level.getChunk(chunk.getX(), chunk.getZ()).setBlockState(cb.getPosition(), Blocks.AIR.defaultBlockState(), true);
+                engine.checkBlock(cb.getPosition());
+
                 ParticleUtils.displayParticleRandomly(
                     LocationUtils.centre(targetBlock.getLocation()),
                     1,
                     5,
                     DUST_OPTIONS
                 );
+
                 definition.getNode().getRoot().removeRootPower(REQUIRED_POWER);
             });
         }

@@ -16,18 +16,11 @@ import org.bukkit.inventory.ItemStack;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class NetworkCell extends NetworkObject {
 
-    public static final int[] SLOTS;
-
-    static {
-        List<Integer> integers = new ArrayList<>();
-        for (int i = 0; i < 54; i++) {
-            integers.add(i);
-        }
-        SLOTS = integers.stream().mapToInt(Integer::intValue).toArray();
-    }
+    public static final int[] SLOTS = IntStream.range(0, 54).toArray();
 
     public NetworkCell(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
         super(itemGroup, item, recipeType, recipe, NodeType.CELL);

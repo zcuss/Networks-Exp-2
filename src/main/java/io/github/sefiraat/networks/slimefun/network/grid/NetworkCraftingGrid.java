@@ -11,7 +11,6 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.items.ItemUtils;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.protection.Interaction;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
@@ -243,7 +242,7 @@ public class NetworkCraftingGrid extends AbstractGrid {
                 if (menu.getItemInSlot(recipeSlot) == null) {
                     // Process item request
                     final GridItemRequest request = new GridItemRequest(itemInSlotClone, 1, player);
-                    final ItemStack requestingStack = definition.getNode().getRoot().getItemStack(request);
+                    final ItemStack requestingStack = definition.getNode().getRoot().getItemStack0(menu.getLocation(), request);
                     if (requestingStack != null) {
                         menu.replaceExistingItem(recipeSlot, requestingStack);
                     }

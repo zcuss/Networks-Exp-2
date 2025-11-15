@@ -158,7 +158,8 @@ public class NetworkWirelessTransmitter extends NetworkObject {
                 return;
             }
 
-            final ItemStack stackToPush = definition.getNode().getRoot().getItemStack(
+            final ItemStack stackToPush = definition.getNode().getRoot().getItemStack0(
+                    blockMenu.getLocation(),
                 new ItemRequest(templateStack.clone(), templateStack.getMaxStackSize())
             );
 

@@ -111,6 +111,16 @@ public class NetworkGrid extends AbstractGrid {
                     menu.replaceExistingItem(displaySlot, null);
                     menu.addMenuClickHandler(displaySlot, (p, slot, item, action) -> false);
                 }
+
+                menu.addPlayerInventoryClickHandler((p, s, i, a) -> {
+                    if (!a.isShiftClicked() || a.isRightClicked()) {
+                        return true;
+                    }
+
+                    // Shift+Left-click
+                    receiveItem(p, i, a, menu);
+                    return false;
+                });
             }
         };
     }

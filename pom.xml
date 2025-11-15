@@ -41,8 +41,11 @@
                 <enabled>true</enabled>
             </snapshots>
             <id>central</id>
-            <name>Maven Plugin Repository</name>
             <url>https://repo1.maven.org/maven2</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>bytecode.space</id>
+            <url>https://repo.bytecode.space/repository/maven-public/</url>
         </pluginRepository>
     </pluginRepositories>
 
@@ -78,6 +81,10 @@
                             <pattern>org.bstats</pattern>
                             <shadedPattern>io.github.sefiraat.networks.bstats</shadedPattern>
                         </relocation>
+                        <relocation>
+                            <pattern>com.cryptomorin.xseries</pattern>
+                            <shadedPattern>io.github.sefiraat.networks.xseries</shadedPattern>
+                        </relocation>
                     </relocations>
                     <filters>
                         <filter>
@@ -97,6 +104,11 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>ca.bkaw</groupId>
+                <artifactId>paper-nms-maven-plugin</artifactId>
+                <version>1.4.10</version>
+            </plugin>
         </plugins>
         <defaultGoal>clean package</defaultGoal>
         <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
@@ -115,8 +127,8 @@
 
     <repositories>
         <repository>
-            <id>spigot-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+            <id>paper</id>
+            <url>https://repo.papermc.io/repositories/maven-public</url>
         </repository>
         <repository>
             <id>jitpack.io</id>
@@ -137,11 +149,19 @@
     </repositories>
 
     <dependencies>
+        <!-- NMS -->
+        <dependency>
+            <groupId>ca.bkaw</groupId>
+            <artifactId>paper-nms</artifactId>
+            <version>1.20.6-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Core -->
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>1.21.4-R0.1-SNAPSHOT</version>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.20.6-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -149,11 +169,24 @@
             <artifactId>Slimefun4</artifactId>
             <version>master-SNAPSHOT</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.spigotmc</groupId>
+                    <artifactId>spigot-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>dev.sefiraat</groupId>
             <artifactId>SefiLib</artifactId>
             <version>0.2.6</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.cryptomorin</groupId>
+            <artifactId>XSeries</artifactId>
+            <version>13.4.0</version>
             <scope>compile</scope>
         </dependency>
 
@@ -163,11 +196,6 @@
             <artifactId>bstats-bukkit</artifactId>
             <version>3.0.2</version>
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-            <version>3.0.1u2</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

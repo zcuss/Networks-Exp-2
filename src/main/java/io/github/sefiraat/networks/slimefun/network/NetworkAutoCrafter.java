@@ -20,7 +20,6 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.protection.Interaction;
 import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
@@ -95,7 +94,6 @@ public class NetworkAutoCrafter extends NetworkObject {
     }
 
     protected void craftPreFlight(@Nonnull BlockMenu blockMenu) {
-
         releaseCache(blockMenu);
 
         final NodeDefinition definition = NetworkStorage.getAllNetworkObjects().get(blockMenu.getLocation());
@@ -109,7 +107,7 @@ public class NetworkAutoCrafter extends NetworkObject {
         if (!this.withholding) {
             final ItemStack stored = blockMenu.getItemInSlot(OUTPUT_SLOT);
             if (stored != null && stored.getType() != Material.AIR) {
-                root.addItemStack(stored);
+                root.addItemStack0(blockMenu.getLocation(), stored);
             }
         }
 
@@ -182,7 +180,7 @@ public class NetworkAutoCrafter extends NetworkObject {
         for (int i = 0; i < 9; i++) {
             final ItemStack requested = instance.getRecipeItems()[i];
             if (requested != null) {
-                final ItemStack fetched = root.getItemStack(new ItemRequest(instance.getRecipeItems()[i], 1));
+                final ItemStack fetched = root.getItemStack0(blockMenu.getLocation(), new ItemRequest(instance.getRecipeItems()[i], 1));
                 inputs[i] = fetched;
             } else {
                 inputs[i] = null;
@@ -203,7 +201,7 @@ public class NetworkAutoCrafter extends NetworkObject {
         if (crafted == null) {
             instance.generateVanillaRecipe(blockMenu.getLocation().getWorld());
             if (instance.getRecipe() == null) {
-                returnItems(root, inputs);
+                returnItems(root, inputs, blockMenu);
                 return false;
             } else if (Arrays.equals(instance.getRecipeItems(), inputs)) {
                 setCache(blockMenu, instance);
@@ -213,7 +211,7 @@ public class NetworkAutoCrafter extends NetworkObject {
 
         // If no item crafted OR result doesn't fit, escape
         if (crafted == null || crafted.getType() == Material.AIR) {
-            returnItems(root, inputs);
+            returnItems(root, inputs, blockMenu);
             return false;
         }
 
@@ -226,10 +224,10 @@ public class NetworkAutoCrafter extends NetworkObject {
         return true;
     }
 
-    private void returnItems(@Nonnull NetworkRoot root, @Nonnull ItemStack[] inputs) {
+    private void returnItems(@Nonnull NetworkRoot root, @Nonnull ItemStack[] inputs, BlockMenu menu) {
         for (ItemStack input : inputs) {
             if (input != null) {
-                root.addItemStack(input);
+                root.addItemStack0(menu.getLocation(), input);
             }
         }
     }

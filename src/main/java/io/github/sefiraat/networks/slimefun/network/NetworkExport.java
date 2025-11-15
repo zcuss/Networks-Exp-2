@@ -112,7 +112,7 @@ public class NetworkExport extends NetworkObject {
         ItemStack clone = testItem.clone();
 
         ItemRequest itemRequest = new ItemRequest(clone, clone.getMaxStackSize());
-        ItemStack retrieved = definition.getNode().getRoot().getItemStack(itemRequest);
+        ItemStack retrieved = definition.getNode().getRoot().getItemStack0(blockMenu.getLocation(), itemRequest);
         if (retrieved != null) {
             blockMenu.pushItem(retrieved, OUTPUT_ITEM_SLOT);
         }

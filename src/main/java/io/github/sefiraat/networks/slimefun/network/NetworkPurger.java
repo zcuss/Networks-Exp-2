@@ -1,5 +1,6 @@
 package io.github.sefiraat.networks.slimefun.network;
 
+import com.cryptomorin.xseries.particles.XParticle;
 import io.github.sefiraat.networks.NetworkStorage;
 import io.github.sefiraat.networks.network.NodeDefinition;
 import io.github.sefiraat.networks.network.NodeType;
@@ -105,12 +106,12 @@ public class NetworkPurger extends NetworkObject {
         clone.setAmount(1);
 
         ItemRequest itemRequest = new ItemRequest(clone, clone.getMaxStackSize());
-        ItemStack retrieved = definition.getNode().getRoot().getItemStack(itemRequest);
+        ItemStack retrieved = definition.getNode().getRoot().getItemStack0(blockMenu.getLocation(), itemRequest);
         if (retrieved != null) {
             retrieved.setAmount(0);
             Location location = blockMenu.getLocation().clone().add(0.5, 1.2, 0.5);
             if (definition.getNode().getRoot().isDisplayParticles()) {
-                location.getWorld().spawnParticle(Particle.SMOKE, location, 0, 0, 0.05, 0);
+                location.getWorld().spawnParticle(XParticle.SMOKE.get(), location, 0, 0, 0.05, 0);
             }
         }
     }

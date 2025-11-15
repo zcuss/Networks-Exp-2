@@ -3,6 +3,7 @@ package io.github.sefiraat.networks.slimefun.network;
 import com.bgsoftware.wildchests.api.WildChestsAPI;
 import io.github.sefiraat.networks.NetworkStorage;
 import io.github.sefiraat.networks.Networks;
+import io.github.sefiraat.networks.listeners.BlockStateRefreshListener;
 import io.github.sefiraat.networks.network.NodeDefinition;
 import io.github.sefiraat.networks.network.NodeType;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -11,21 +12,18 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.inventory.InvUtils;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.protection.Interaction;
+import io.github.thebusybiscuit.slimefun4.libraries.paperlib.PaperLib;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
+import net.minecraft.world.level.block.AbstractFurnaceBlock;
+import net.minecraft.world.level.block.BrewingStandBlock;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Particle;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
-import org.bukkit.inventory.BrewerInventory;
-import org.bukkit.inventory.FurnaceInventory;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.block.*;
+import org.bukkit.inventory.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -70,7 +68,7 @@ public class NetworkVanillaPusher extends NetworkDirectional {
 
         final BlockFace direction = getCurrentDirection(blockMenu);
         final Block block = blockMenu.getBlock();
-        final Block targetBlock = blockMenu.getBlock().getRelative(direction);
+        final Block targetBlock = block.getRelative(direction);
         final UUID uuid = UUID.fromString(BlockStorage.getLocationInfo(block.getLocation(), OWNER_KEY));
         final OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
 
@@ -78,13 +76,22 @@ public class NetworkVanillaPusher extends NetworkDirectional {
             return;
         }
 
-        final BlockState blockState = targetBlock.getState();
+        /*
+        CraftBlock cb = (CraftBlock) block;
+        net.minecraft.world.level.block.state.BlockState nms = cb.getNMS();
+        net.minecraft.world.level.block.Block nmsBlock = nms.getBlock();
 
-        if (!(blockState instanceof InventoryHolder holder)) {
+        if (!(nms.getBlock() instanceof AbstractChestBlock<?> c)) {
             return;
         }
 
-        final Inventory inventory = holder.getInventory();
+         */
+        BlockState state = BlockStateRefreshListener.getState(targetBlock);
+        if (!(state instanceof InventoryHolder holder)) {
+            return;
+        }
+        Inventory inv = holder.getInventory();
+
         final ItemStack stack = blockMenu.getItemInSlot(INPUT_SLOT);
 
         if (stack == null || stack.getType() == Material.AIR) {
@@ -93,19 +100,28 @@ public class NetworkVanillaPusher extends NetworkDirectional {
 
         boolean wildChests = Networks.getSupportedPluginManager().isWildChests();
         boolean isChest = wildChests && WildChestsAPI.getChest(targetBlock.getLocation()) != null;
+        /*
+        MenuProvider mp = c.getMenuProvider(nms, ((CraftWorld) cb.getWorld()).getHandle(), cb.getPosition());
+        c.get
 
-        sendDebugMessage(block.getLocation(), "WildChests detected: " + wildChests);
-        sendDebugMessage(block.getLocation(), "Block detected as chest: " + isChest);
 
-        if (inventory instanceof FurnaceInventory furnace) {
+        if (nmsBlock instanceof AbstractFurnaceBlock furnace) {
             handleFurnace(stack, furnace);
-        } else if (inventory instanceof BrewerInventory brewer) {
+        } else if (nmsBlock instanceof BrewingStandBlock brewer) {
             handleBrewingStand(stack, brewer);
         } else if (wildChests && isChest) {
-            sendDebugMessage(block.getLocation(), "WildChest test failed, escaping");
-            return;
         } else if (InvUtils.fits(holder.getInventory(), stack)) {
-            sendDebugMessage(block.getLocation(), "WildChest test passed.");
+            holder.getInventory().addItem(stack);
+            stack.setAmount(0);
+        }
+         */
+
+        if (inv instanceof FurnaceInventory furnace) {
+            handleFurnace(stack, furnace);
+        } else if (inv instanceof BrewerInventory brewer) {
+            handleBrewingStand(stack, brewer);
+        } else if (wildChests && isChest) {
+        } else if (InvUtils.fits(holder.getInventory(), stack)) {
             holder.getInventory().addItem(stack);
             stack.setAmount(0);
         }

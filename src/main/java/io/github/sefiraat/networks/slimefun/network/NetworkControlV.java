@@ -16,26 +16,23 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
-import io.github.thebusybiscuit.slimefun4.libraries.dough.protection.Interaction;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.Particle;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.lighting.LevelLightEngine;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.craftbukkit.CraftChunk;
+import org.bukkit.craftbukkit.block.CraftBlock;
+import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.inventory.ItemStack;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 public class NetworkControlV extends NetworkDirectional {
 
@@ -124,23 +121,25 @@ public class NetworkControlV extends NetworkDirectional {
             return;
         }
 
-        final UUID uuid = UUID.fromString(BlockStorage.getLocationInfo(blockMenu.getLocation(), OWNER_KEY));
-        final OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
-
-        if (!Slimefun.getProtectionManager().hasPermission(offlinePlayer, targetBlock, Interaction.PLACE_BLOCK)) {
-            return;
-        }
-
         final ItemRequest request = new ItemRequest(templateStack.clone(), 1);
-        final ItemStack fetchedStack = definition.getNode().getRoot().getItemStack(request);
+        final ItemStack fetchedStack = definition.getNode().getRoot().getItemStack0(blockMenu.getLocation(), request);
 
         if (fetchedStack == null || fetchedStack.getAmount() < 1) {
             return;
         }
 
+        CraftBlock cb = (CraftBlock) targetBlock;
+        LevelAccessor level = ((CraftBlock) targetBlock).getHandle();
+        CraftChunk chunk = (CraftChunk) cb.getChunk();
+        BlockState bs = CraftMagicNumbers.getBlock(fetchedStack.getType()).defaultBlockState();
+        LevelLightEngine engine = level.getLightEngine();
+
         this.blockCache.add(targetPosition);
         Bukkit.getScheduler().runTask(Networks.getInstance(), bukkitTask -> {
-            targetBlock.setType(fetchedStack.getType(), true);
+            level.getMinecraftWorld().removeBlockEntity(cb.getPosition());
+            level.getChunk(chunk.getX(), chunk.getZ()).setBlockState(cb.getPosition(), bs, true);
+            engine.checkBlock(cb.getPosition());
+
             if (SupportedPluginManager.getInstance().isMcMMO()) {
                 mcMMO.getUserBlockTracker().setIneligible(targetBlock);
             }

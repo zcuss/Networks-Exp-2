@@ -81,7 +81,7 @@ public class NetworkImport extends NetworkObject {
             if (itemStack == null || itemStack.getType() == Material.AIR) {
                 continue;
             }
-            definition.getNode().getRoot().addItemStack(itemStack);
+            definition.getNode().getRoot().addItemStack0(blockMenu.getLocation(), itemStack);
         }
     }
 

@@ -1,5 +1,7 @@
 package io.github.sefiraat.networks.slimefun.network;
 
+import com.cryptomorin.xseries.XEnchantment;
+import com.cryptomorin.xseries.particles.XParticle;
 import io.github.sefiraat.networks.NetworkStorage;
 import io.github.sefiraat.networks.network.NodeType;
 import io.github.sefiraat.networks.utils.ItemCreator;
@@ -13,7 +15,6 @@ import io.github.thebusybiscuit.slimefun4.api.items.settings.IntRangeSetting;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockPlaceHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.protection.Interaction;
 import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ClickAction;
@@ -321,7 +322,7 @@ public abstract class NetworkDirectional extends NetworkObject {
         );
         final ItemMeta itemMeta = displayStack.getItemMeta();
         if (active) {
-            itemMeta.addEnchant(Enchantment.LUCK_OF_THE_SEA, 1, true);
+            itemMeta.addEnchant(XEnchantment.LUCK_OF_THE_SEA.get(), 1, true);
             itemMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         }
         itemMeta.setLore(List.of(
@@ -341,7 +342,7 @@ public abstract class NetworkDirectional extends NetworkObject {
             );
             final ItemMeta itemMeta = displayStack.getItemMeta();
             if (active) {
-                itemMeta.addEnchant(Enchantment.LUCK_OF_THE_SEA, 1, true);
+                itemMeta.addEnchant(XEnchantment.LUCK_OF_THE_SEA.get(), 1, true);
                 itemMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             }
             itemMeta.setLore(List.of(
@@ -372,6 +373,6 @@ public abstract class NetworkDirectional extends NetworkObject {
         final Vector faceVector = blockFace.getDirection().clone().multiply(-1);
         final Vector pushVector = faceVector.clone().multiply(2);
         final Location displayLocation = location.clone().add(0.5, 0.5, 0.5).add(faceVector);
-        location.getWorld().spawnParticle(Particle.DUST, displayLocation, 0, pushVector.getX(), pushVector.getY(), pushVector.getZ(), getDustOptions());
+        location.getWorld().spawnParticle(XParticle.DUST.get(), displayLocation, 0, pushVector.getX(), pushVector.getY(), pushVector.getZ(), getDustOptions());
     }
 }

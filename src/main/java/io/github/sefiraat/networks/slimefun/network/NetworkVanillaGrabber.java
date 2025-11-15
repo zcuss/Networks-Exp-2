@@ -3,8 +3,10 @@ package io.github.sefiraat.networks.slimefun.network;
 import com.bgsoftware.wildchests.api.WildChestsAPI;
 import io.github.sefiraat.networks.NetworkStorage;
 import io.github.sefiraat.networks.Networks;
+import io.github.sefiraat.networks.listeners.BlockStateRefreshListener;
 import io.github.sefiraat.networks.network.NodeDefinition;
 import io.github.sefiraat.networks.network.NodeType;
+import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
@@ -26,6 +28,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 
 import javax.annotation.Nonnull;
@@ -86,7 +89,7 @@ public class NetworkVanillaGrabber extends NetworkDirectional {
             return;
         }
 
-        final BlockState blockState = targetBlock.getState();
+        final BlockState blockState = BlockStateRefreshListener.getState(targetBlock);
 
         if (!(blockState instanceof InventoryHolder holder)) {
             return;
@@ -118,11 +121,20 @@ public class NetworkVanillaGrabber extends NetworkDirectional {
         } else if (inventory instanceof BrewerInventory brewerInventory) {
             for (int i = 0; i < 3; i++) {
                 final ItemStack stack = brewerInventory.getContents()[i];
-                if (stack != null && stack.getType() == Material.POTION) {
+                if (stack != null && stack.getType() != Material.AIR) { // 网拓复制过来的，包能跑
                     final PotionMeta potionMeta = (PotionMeta) stack.getItemMeta();
-                    if (potionMeta.getBasePotionData().getType() != PotionType.WATER) {
-                        grabItem(blockMenu, stack);
-                        return;
+                    if (Slimefun.getMinecraftVersion().isAtLeast(MinecraftVersion.MINECRAFT_1_20_5)) {
+                        // 1.20.5 及以上
+                        if (potionMeta.getBasePotionType() == PotionType.WATER) {
+                            grabItem(blockMenu, stack);
+                        }
+                    } else {
+                        // 1.20.5 以下
+                        PotionData bpd = potionMeta.getBasePotionData();
+                        if (bpd != null && bpd.getType() != PotionType.WATER) {
+                            grabItem(blockMenu, stack);
+                            break;
+                        }
                     }
                 }
             }
