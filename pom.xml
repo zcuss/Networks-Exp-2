@@ -5,8 +5,8 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.sefiraat</groupId>
-    <artifactId>networks</artifactId>
-    <version>MODIFIED</version>
+    <artifactId>Networks</artifactId>
+    <version>v1</version>
 
     <distributionManagement>
         <repository>
@@ -69,7 +69,7 @@
     </properties>
 
     <build>
-        <finalName>${project.name} v${project.version}</finalName>
+        <finalName>${project.name} MODIFIED BY mmmjjkx ${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
