@@ -129,13 +129,15 @@ public class NetworkControlX extends NetworkDirectional {
                 || material == Material.BARREL
                 || material == Material.SHULKER_BOX
                 || material.name().endsWith("_SHULKER_BOX")
+                || material.name().endsWith("_SHELF")
                 || material == Material.FURNACE
                 || material == Material.BLAST_FURNACE
                 || material == Material.SMOKER
                 || material == Material.HOPPER
                 || material == Material.DROPPER
                 || material == Material.DISPENSER
-                || material == Material.BREWING_STAND) {
+                || material == Material.BREWING_STAND
+        ) {
             return;
         }
 
