@@ -119,7 +119,7 @@ public class NetworkQuantumStorage extends SlimefunItem implements DistinctiveIt
     @Getter
     private final int maxAmount;
     @Setter
-    private boolean supportsCustomMaxAmount = true;
+    private boolean supportsCustomMaxAmount = false;
 
     public NetworkQuantumStorage(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe, int maxAmount) {
         super(itemGroup, item, recipeType, recipe);
@@ -493,6 +493,7 @@ public class NetworkQuantumStorage extends SlimefunItem implements DistinctiveIt
 
             ItemStackCache storedItemCache = new ItemStackCache(storedItem);
 
+
             if (StackUtils.itemsMatch(storedItemCache, item, true)) {
                 int toAdd = Math.toIntExact(Math.min(item.getAmount(), capacity - cache.getAmount()));
                 if (toAdd > 0) {
@@ -571,6 +572,7 @@ public class NetworkQuantumStorage extends SlimefunItem implements DistinctiveIt
 
         QuantumCache cache = createCache(itemStack, blockMenu, amount, maxAmount, voidExcess, supportsCustomMaxAmount);
 
+
         CACHES.put(location, cache);
         return cache;
     }
@@ -583,13 +585,18 @@ public class NetworkQuantumStorage extends SlimefunItem implements DistinctiveIt
             final ItemStack clone = itemStack.clone();
             final ItemMeta itemMeta = clone.getItemMeta();
             final List<String> lore = itemMeta.getLore();
+            for (int i = 0; i < 3; i++) {
+                if (lore != null && lore.size() == 0) {
+                    break;
+                }
+                lore.remove(lore.size() - 1);
+            }
 
             if (supportsCustomMaxAmount) {
                 if (!lore.isEmpty()) {
                     lore.remove(lore.size() - 1);
                 }
             }
-
             itemMeta.setLore(lore.isEmpty() ? null : lore);
             clone.setItemMeta(itemMeta);
 

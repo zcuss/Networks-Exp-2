@@ -95,7 +95,6 @@ public class NetworkRoot extends NetworkNode {
     private final int maxNodes;
     @Getter
     private final boolean recordFlow;
-    private int cellsSize = -1;
     @Getter
     private @Nullable Location controller = null;
 
@@ -285,12 +284,7 @@ public class NetworkRoot extends NetworkNode {
             case IMPORT -> importers.add(location);
             case EXPORT -> exporters.add(location);
             case GRID -> grids.add(location);
-            //lgnore CELL forever
-            //case CELL -> {
-            //    if (BlockStorage.check(location) instanceof NetworkCell) {
-            //        cells.add(location);
-            //    }
-            //}
+            case CELL -> cells.add(location);
             case GRABBER -> grabbers.add(location);
             case PUSHER -> pushers.add(location);
             case PURGER -> purgers.add(location);
@@ -1329,15 +1323,6 @@ public class NetworkRoot extends NetworkNode {
     public void uncontrolAccessOutput(@NotNull Location accessor) {
         controlledAccessOutputHistory.remove(accessor);
         reduceTransportOutputMiss(accessor);
-    }
-
-    public int getCellsSize() {
-        if (cellsSize != -1) {
-            return cellsSize;
-        }
-
-        cellsSize = getCells().size();
-        return cellsSize;
     }
 
     @Warning(

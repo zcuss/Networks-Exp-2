@@ -45,14 +45,6 @@ public class NetworkNode {
     }
 
     public void addChild(@Nonnull NetworkNode child) {
-        // bro try to dupe
-        final Location rootLocation = root.getNodePosition();
-        if (rootLocation.getBlock().getType() == Material.AIR
-                && BlockStorage.check(rootLocation) instanceof NetworkController) {
-            NetworkUtils.clearNetwork(rootLocation);
-            return;
-        }
-
         child.setParent(this);
         child.setRoot(this.getRoot());
         this.root.addRootPower(child.getPower());
@@ -121,6 +113,12 @@ public class NetworkNode {
                 testDefinition.setNode(networkNode);
                 NetworkStorage.getAllNetworkObjects().put(testLocation, testDefinition);
             }
+        }
+
+        final Location rootLocation = root.getNodePosition();
+        if (rootLocation.getBlock().getType() == Material.AIR
+                && BlockStorage.check(rootLocation) instanceof NetworkController) {
+            NetworkUtils.clearNetwork(rootLocation);
         }
     }
 
