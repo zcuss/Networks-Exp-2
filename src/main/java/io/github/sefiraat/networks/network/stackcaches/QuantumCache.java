@@ -1,6 +1,8 @@
 package io.github.sefiraat.networks.network.stackcaches;
 
 import io.github.sefiraat.networks.utils.Theme;
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -13,8 +15,14 @@ public class QuantumCache extends ItemStackCache {
     @Nullable
     private final ItemMeta storedItemMeta;
     private final boolean supportsCustomMaxAmount;
+    @Getter
+    @Setter
     private int limit;
+    @Setter
+    @Getter
     private int amount;
+    @Getter
+    @Setter
     private boolean voidExcess;
 
     public QuantumCache(@Nullable ItemStack storedItem, int amount, int limit, boolean voidExcess, boolean supportsCustomMaxAmount) {
@@ -29,14 +37,6 @@ public class QuantumCache extends ItemStackCache {
     @Nullable
     public ItemMeta getStoredItemMeta() {
         return this.storedItemMeta;
-    }
-
-    public int getAmount() {
-        return amount;
-    }
-
-    public void setAmount(int amount) {
-        this.amount = amount;
     }
 
     public boolean supportsCustomMaxAmount() {
@@ -58,22 +58,6 @@ public class QuantumCache extends ItemStackCache {
 
     public void reduceAmount(int amount) {
         this.amount = this.amount - amount;
-    }
-
-    public int getLimit() {
-        return limit;
-    }
-
-    public void setLimit(int limit) {
-        this.limit = limit;
-    }
-
-    public boolean isVoidExcess() {
-        return voidExcess;
-    }
-
-    public void setVoidExcess(boolean voidExcess) {
-        this.voidExcess = voidExcess;
     }
 
     @Nullable

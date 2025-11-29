@@ -9,6 +9,7 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import lombok.Getter;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 
 import javax.annotation.Nonnull;
@@ -44,6 +45,14 @@ public class NetworkNode {
     }
 
     public void addChild(@Nonnull NetworkNode child) {
+        // bro try to dupe
+        final Location rootLocation = root.getNodePosition();
+        if (rootLocation.getBlock().getType() == Material.AIR
+                && BlockStorage.check(rootLocation) instanceof NetworkController) {
+            NetworkUtils.clearNetwork(rootLocation);
+            return;
+        }
+
         child.setParent(this);
         child.setRoot(this.getRoot());
         this.root.addRootPower(child.getPower());

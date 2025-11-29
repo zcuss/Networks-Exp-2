@@ -104,7 +104,7 @@ public class NetworkGrid extends AbstractGrid {
                 menu.replaceExistingItem(getFilterSlot(), getFilterStack());
                 menu.addMenuClickHandler(getFilterSlot(), (p, slot, item, action) -> {
                     GridCache gridCache = getCacheMap().get(menu.getLocation());
-                    return setFilter(p, menu, gridCache, action);
+                    return setFilter(p, gridCache, action);
                 });
 
                 for (int displaySlot : getDisplaySlots()) {

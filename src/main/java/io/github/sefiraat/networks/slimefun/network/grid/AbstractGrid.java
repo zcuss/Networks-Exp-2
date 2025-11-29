@@ -1,10 +1,7 @@
 package io.github.sefiraat.networks.slimefun.network.grid;
 
 import io.github.sefiraat.networks.NetworkStorage;
-import io.github.sefiraat.networks.network.GridItemRequest;
-import io.github.sefiraat.networks.network.NetworkRoot;
-import io.github.sefiraat.networks.network.NodeDefinition;
-import io.github.sefiraat.networks.network.NodeType;
+import io.github.sefiraat.networks.network.*;
 import io.github.sefiraat.networks.slimefun.network.NetworkObject;
 import io.github.sefiraat.networks.utils.ItemCreator;
 import io.github.sefiraat.networks.utils.StackUtils;
@@ -156,10 +153,13 @@ public abstract class AbstractGrid extends NetworkObject {
             return;
         }
 
+        final NetworkNode node = definition.getNode();
+
         // Update Screen
-        final NetworkRoot root = definition.getNode().getRoot();
+        final NetworkRoot root = node.getRoot();
+
         final GridCache gridCache = getCacheMap().get(blockMenu.getLocation().clone());
-        final List<Map.Entry<ItemStack, Integer>> entries = getEntries(root, gridCache); // size是0，点F7，步入getEnt
+        final List<Map.Entry<ItemStack, Integer>> entries = getEntries(root, gridCache);
         final int pages = (int) Math.ceil(entries.size() / (double) getDisplaySlots().length) - 1;
 
         gridCache.setMaxPages(pages);
@@ -217,7 +217,7 @@ public abstract class AbstractGrid extends NetworkObject {
 
     @Nonnull
     protected List<Map.Entry<ItemStack, Integer>> getEntries(@Nonnull NetworkRoot networkRoot, @Nonnull GridCache cache) {
-        return networkRoot.getAllNetworkItems().entrySet().stream() // getAllNetworkItems 是0，再点F7，步入
+        return networkRoot.getAllNetworkItems().entrySet().stream()
                 .filter(entry -> {
                     if (cache.getFilter() == null) {
                         return true;
@@ -237,7 +237,7 @@ public abstract class AbstractGrid extends NetworkObject {
                 .toList();
     }
 
-    protected boolean setFilter(@Nonnull Player player, @Nonnull BlockMenu blockMenu, @Nonnull GridCache gridCache, @Nonnull ClickAction action) {
+    protected boolean setFilter(@Nonnull Player player, @Nonnull GridCache gridCache, @Nonnull ClickAction action) {
         if (action.isRightClicked()) {
             gridCache.setFilter(null);
         } else {

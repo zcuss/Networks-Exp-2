@@ -1,11 +1,18 @@
 package io.github.sefiraat.networks.slimefun.network.grid;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class GridCache {
 
+    @Setter
+    @Getter
     private int page;
+    @Setter
+    @Getter
     private int maxPages;
     @Nonnull
     private SortOrder sortOrder;
@@ -16,22 +23,6 @@ public class GridCache {
         this.page = page;
         this.maxPages = maxPages;
         this.sortOrder = sortOrder;
-    }
-
-    public int getPage() {
-        return page;
-    }
-
-    public void setPage(int page) {
-        this.page = page;
-    }
-
-    public int getMaxPages() {
-        return maxPages;
-    }
-
-    public void setMaxPages(int maxPages) {
-        this.maxPages = maxPages;
     }
 
     @Nonnull
@@ -52,7 +43,7 @@ public class GridCache {
         this.filter = filter;
     }
 
-    enum SortOrder {
+    public enum SortOrder {
         ALPHABETICAL,
         NUMBER
     }
