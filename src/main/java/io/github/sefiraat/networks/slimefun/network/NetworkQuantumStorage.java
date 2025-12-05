@@ -45,6 +45,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class NetworkQuantumStorage extends SlimefunItem implements DistinctiveItem {
@@ -150,16 +151,14 @@ public class NetworkQuantumStorage extends SlimefunItem implements DistinctiveIt
     private static boolean isBlacklisted(@Nonnull ItemStack itemStack) {
         SlimefunItem sf = SlimefunItem.getByItem(itemStack);
 
-        // Blok item INFINITY_STORAGE berdasarkan ID Slimefun
-        final boolean isInfinityStorage = sf != null && "INFINITY_STORAGE".equalsIgnoreCase(sf.getId());
+        final boolean isStorageId = sf != null && sf.getId().toUpperCase(Locale.ROOT).endsWith("_STORAGE");
 
         return itemStack.getType() == Material.AIR
                 || itemStack.getType().getMaxDurability() < 0
                 || Tag.SHULKER_BOXES.isTagged(itemStack.getType())
                 || sf instanceof NetworkQuantumStorage
-                || isInfinityStorage;
+                || isStorageId;
     }
-
 
     @ParametersAreNonnullByDefault
     @Nullable
