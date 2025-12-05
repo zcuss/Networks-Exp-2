@@ -74,7 +74,20 @@ public class NetworkVanillaGrabber extends NetworkDirectional {
         final BlockFace direction = getCurrentDirection(blockMenu);
         final Block block = blockMenu.getBlock();
         final Block targetBlock = block.getRelative(direction);
-        final UUID uuid = UUID.fromString(BlockStorage.getLocationInfo(block.getLocation(), OWNER_KEY));
+
+        // Owner might be null/invalid — handle safely
+        String ownerInfo = BlockStorage.getLocationInfo(block.getLocation(), OWNER_KEY);
+        if (ownerInfo == null || ownerInfo.isBlank()) {
+            return;
+        }
+
+        final UUID uuid;
+        try {
+            uuid = UUID.fromString(ownerInfo);
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+
         final OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
 
         if (!Slimefun.getProtectionManager().hasPermission(offlinePlayer, targetBlock, Interaction.INTERACT_BLOCK)) {
@@ -113,17 +126,18 @@ public class NetworkVanillaGrabber extends NetworkDirectional {
         } else if (inventory instanceof BrewerInventory brewerInventory) {
             for (int i = 0; i < 3; i++) {
                 final ItemStack stack = brewerInventory.getContents()[i];
-                if (stack != null && stack.getType() != Material.AIR) { // 网拓复制过来的，包能跑
+                if (stack != null && stack.getType() != Material.AIR) { // safe-null check
                     final PotionMeta potionMeta = (PotionMeta) stack.getItemMeta();
+                    if (potionMeta == null) continue;
+
                     if (Slimefun.getMinecraftVersion().isAtLeast(MinecraftVersion.MINECRAFT_1_20_5)) {
-                        // 1.20.5 及以上
+                        // 1.20.5 及以上: gunakan modern API
                         if (potionMeta.getBasePotionType() == PotionType.WATER) {
                             grabItem(blockMenu, stack);
                         }
                     } else {
-                        // 1.20.5 以下
-                        PotionData bpd = potionMeta.getBasePotionData();
-                        if (bpd != null && bpd.getType() != PotionType.WATER) {
+                        // 1.20.5 以下: pakai helper yang menampung panggilan deprecated
+                        if (!isBasePotionWaterCompat(potionMeta)) {
                             grabItem(blockMenu, stack);
                             break;
                         }
@@ -145,6 +159,17 @@ public class NetworkVanillaGrabber extends NetworkDirectional {
             stack.setAmount(0);
             return true;
         } else {
+            return false;
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private static boolean isBasePotionWaterCompat(@Nonnull PotionMeta meta) {
+        try {
+            PotionData pd = meta.getBasePotionData();
+            return pd != null && pd.getType() == PotionType.WATER;
+        } catch (Throwable ignored) {
+            // Jika API tidak tersedia atau berubah, anggap bukan water agar logic tetap aman
             return false;
         }
     }

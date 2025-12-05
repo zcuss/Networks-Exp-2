@@ -4,6 +4,16 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+/**
+ * Utility pembuat ItemStack sederhana.
+ * Menggunakan @SuppressWarnings("deprecation") untuk sementara
+ * agar tidak terganggu oleh API deprecated (displayName / lore).
+ *
+ * Jika ingin migrasi "bersih", saya bisa ubah ke Adventure Components
+ * (ItemMeta::displayName(Component) & ItemMeta::lore(List<Component>))
+ * dan mengkonversi warna legacy via LegacyComponentSerializer.
+ */
+@SuppressWarnings("deprecation")
 public class ItemCreator {
     public static ItemStack create(Material material, String name) {
         ItemStack item = new ItemStack(material);

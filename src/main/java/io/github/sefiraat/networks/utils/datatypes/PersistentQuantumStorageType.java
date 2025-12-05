@@ -62,7 +62,6 @@ public class PersistentQuantumStorageType implements PersistentDataType<Persiste
         final int amount = primitive.get(AMOUNT, DataType.INTEGER);
         final int limit = primitive.get(MAX_AMOUNT, DataType.INTEGER);
         final boolean voidExcess = primitive.get(VOID, DataType.BOOLEAN);
-        final boolean supportsCustomMaxAmount = primitive.get(SUPPORTS_CUSTOM_MAX_AMOUNT, DataType.BOOLEAN);
 
         return new QuantumCache(item, amount, limit, voidExcess);
     }

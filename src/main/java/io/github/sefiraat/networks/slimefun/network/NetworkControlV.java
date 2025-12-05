@@ -18,17 +18,12 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.blocks.BlockPosition;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.craftbukkit.block.CraftBlock;
-import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.inventory.ItemStack;
 
 import javax.annotation.Nonnull;
@@ -36,6 +31,9 @@ import javax.annotation.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Network controller variant for versions without direct NMS usage.
+ */
 public class NetworkControlV extends NetworkDirectional {
 
     public static final ItemStack TEMPLATE_BACKGROUND_STACK = ItemCreator.create(
@@ -128,27 +126,36 @@ public class NetworkControlV extends NetworkDirectional {
             return;
         }
 
-        CraftBlock cb = (CraftBlock) targetBlock;
-        LevelAccessor level = ((CraftBlock) targetBlock).getHandle();
-        BlockState bs = CraftMagicNumbers.getBlock(fetchedStack.getType()).defaultBlockState();
-        LevelLightEngine engine = level.getLightEngine();
+        // Use Bukkit API to place the block (no NMS)
+        final Material fetchedMaterial = fetchedStack.getType();
 
         this.blockCache.add(targetPosition);
         Bukkit.getScheduler().runTask(Networks.getInstance(), bukkitTask -> {
-            level.getMinecraftWorld().removeBlockEntity(cb.getPosition());
-            level.setBlock(cb.getPosition(), bs, 3);
-            engine.checkBlock(cb.getPosition());
+            try {
+                // Place the block without physics (avoid updating neighbors)
+                targetBlock.setType(fetchedMaterial, false);
 
-            if (SupportedPluginManager.getInstance().isMcMMO()) {
-                mcMMO.getUserBlockTracker().setIneligible(targetBlock);
+                // If mcMMO is present, mark block ineligible using mcMMO API (best-effort)
+                try {
+                    if (SupportedPluginManager.getInstance().isMcMMO()) {
+                        // keep existing behavior: mark as ineligible in mcMMO user tracker
+                        mcMMO.getUserBlockTracker().setIneligible(targetBlock);
+                    }
+                } catch (Throwable ignored) {
+                    // mcMMO API may vary; ignore if unavailable
+                }
+
+                // Display particle effect at the placed block
+                ParticleUtils.displayParticleRandomly(
+                        LocationUtils.centre(targetBlock.getLocation()),
+                        Particle.ELECTRIC_SPARK,
+                        1,
+                        5
+                );
+            } catch (Throwable t) {
+                // If something fails during placement, log fine (avoid crashing tick)
+                Bukkit.getLogger().finer("Failed to paste block at " + targetBlock.getLocation() + ": " + t.getMessage());
             }
-
-            ParticleUtils.displayParticleRandomly(
-                    LocationUtils.centre(targetBlock.getLocation()),
-                    Particle.ELECTRIC_SPARK,
-                    1,
-                    5
-            );
         });
     }
 

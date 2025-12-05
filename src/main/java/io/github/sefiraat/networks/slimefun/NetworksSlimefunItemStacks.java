@@ -21,6 +21,7 @@ import java.text.MessageFormat;
  * Creating SlimefunItemstacks here due to some items being created in Enums so this will
  * act as a one-stop-shop for the stacks themselves.
  */
+@SuppressWarnings("deprecation")
 @UtilityClass
 public class NetworksSlimefunItemStacks {
 

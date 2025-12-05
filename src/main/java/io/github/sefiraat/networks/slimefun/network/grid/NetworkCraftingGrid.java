@@ -265,7 +265,7 @@ public class NetworkCraftingGrid extends AbstractGrid {
             if (stack == null || stack.getType() == Material.AIR) {
                 continue;
             }
-            definition.getNode().getRoot().addItemStack(stack);
+            definition.getNode().getRoot().addItem(menu.getLocation(), stack);
         }
     }
 }

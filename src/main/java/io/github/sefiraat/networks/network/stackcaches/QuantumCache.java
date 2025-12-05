@@ -10,6 +10,9 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+
 public class QuantumCache extends ItemStackCache {
 
     @Nullable
@@ -78,31 +81,86 @@ public class QuantumCache extends ItemStackCache {
         return withdrawItem(this.getItemStack().getMaxStackSize());
     }
 
+    private String getReadableDisplayName(ItemMeta meta) {
+        if (meta == null) return "";
+        // Jika ada display name (Component), serialize ke teks legacy untuk menampilkan
+        if (meta.hasDisplayName()) {
+            Component comp = meta.displayName();
+            return LegacyComponentSerializer.legacySection().serialize(comp);
+        }
+        return "";
+    }
+
     public void addMetaLore(ItemMeta itemMeta) {
-        final List<String> lore = itemMeta.hasLore() ? itemMeta.getLore() : new ArrayList<>();
-        lore.add("");
-        lore.add(Theme.CLICK_INFO + "Holding: " +
-                (this.getItemMeta() != null && this.getItemMeta().hasDisplayName() ? this.getItemMeta().getDisplayName() : this.getItemStack().getType().name())
-        );
-        lore.add(Theme.CLICK_INFO + "Amount: " + this.getAmount());
+        final List<Component> loreComponents = itemMeta.lore() != null ? new ArrayList<>(itemMeta.lore()) : new ArrayList<>();
+        // kosongkan baris pemisah (sama seperti sebelumnya)
+        loreComponents.add(Component.text(""));
+
+        // Nama yang ditampilkan: prioritas ke ItemMeta displayName (Component) jika ada, fallback ke material name
+        String holdingName = this.getItemMeta() != null
+        ? getReadableDisplayName(this.getItemMeta())
+        : (this.getItemStack() != null ? this.getItemStack().getType().name() : "");
+
+
+        loreComponents.add(Component.text(Theme.CLICK_INFO + "Holding: " + holdingName));
+        loreComponents.add(Component.text(Theme.CLICK_INFO + "Amount: " + this.getAmount()));
         if (this.supportsCustomMaxAmount) {
-            lore.add(Theme.CLICK_INFO + "Current capacity limit: " + Theme.ERROR + this.getLimit());
+            loreComponents.add(Component.text(Theme.CLICK_INFO + "Current capacity limit: " + Theme.ERROR + this.getLimit()));
         }
 
-        itemMeta.setLore(lore);
+        itemMeta.lore(loreComponents);
     }
 
     public void updateMetaLore(ItemMeta itemMeta) {
-        final List<String> lore = itemMeta.hasLore() ? itemMeta.getLore() : new ArrayList<>();
-        final int loreIndexModifier = this.supportsCustomMaxAmount ? 1 : 0;
-        lore.set(lore.size() - 2, Theme.CLICK_INFO + "Holding: " +
-                (this.getItemMeta() != null && this.getItemMeta().hasDisplayName() ? this.getItemMeta().getDisplayName() : this.getItemStack().getType().name())
-        );
-        lore.set(lore.size() - 1, Theme.CLICK_INFO + "Amount: " + this.getAmount());
-        if (this.supportsCustomMaxAmount) {
-            lore.set(lore.size() - loreIndexModifier, Theme.CLICK_INFO + "Current capacity limit: " + Theme.ERROR + this.getLimit());
+        final List<Component> loreComponents = itemMeta.lore() != null ? new ArrayList<>(itemMeta.lore()) : new ArrayList<>();
+        if (loreComponents.isEmpty()) {
+            // nothing to update
+            itemMeta.lore(loreComponents);
+            return;
         }
 
-        itemMeta.setLore(lore);
+        // Hitung index yang benar berdasarkan apakah capacity line ada atau tidak.
+        // Jika supportsCustomMaxAmount == true, expected tail is: ... , <Holding>, <Amount>, <Capacity>
+        // Jika false, expected tail is: ... , <Holding>, <Amount>
+        int size = loreComponents.size();
+        if (this.supportsCustomMaxAmount) {
+            // butuh minimal 3 lines after possible prefix; jika tidak, jangan NPE
+            if (size < 3) {
+                // fallback: append entries if structure tidak sesuai
+                addMetaLore(itemMeta);
+                return;
+            }
+            int holdingIndex = size - 3;
+            int amountIndex = size - 2;
+            int capacityIndex = size - 1;
+
+            String holdingName = (this.getItemMeta() != null && this.getItemMeta().hasDisplayName()
+                    ? LegacyComponentSerializer.legacySection().serialize(this.getItemMeta().displayName())
+                    : (this.getItemStack() != null ? this.getItemStack().getType().name() : "")
+            );
+
+            loreComponents.set(holdingIndex, Component.text(Theme.CLICK_INFO + "Holding: " + holdingName));
+            loreComponents.set(amountIndex, Component.text(Theme.CLICK_INFO + "Amount: " + this.getAmount()));
+            loreComponents.set(capacityIndex, Component.text(Theme.CLICK_INFO + "Current capacity limit: " + Theme.ERROR + this.getLimit()));
+        } else {
+            // supportsCustomMaxAmount == false
+            if (size < 2) {
+                // struktur tak terduga -> buat ulang
+                addMetaLore(itemMeta);
+                return;
+            }
+            int holdingIndex = size - 2;
+            int amountIndex = size - 1;
+
+            String holdingName = (this.getItemMeta() != null && this.getItemMeta().hasDisplayName()
+                    ? LegacyComponentSerializer.legacySection().serialize(this.getItemMeta().displayName())
+                    : (this.getItemStack() != null ? this.getItemStack().getType().name() : "")
+            );
+
+            loreComponents.set(holdingIndex, Component.text(Theme.CLICK_INFO + "Holding: " + holdingName));
+            loreComponents.set(amountIndex, Component.text(Theme.CLICK_INFO + "Amount: " + this.getAmount()));
+        }
+
+        itemMeta.lore(loreComponents);
     }
 }

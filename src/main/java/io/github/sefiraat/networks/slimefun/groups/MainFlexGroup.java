@@ -10,9 +10,11 @@ import io.github.thebusybiscuit.slimefun4.core.guide.SlimefunGuideMode;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -103,7 +105,9 @@ public class MainFlexGroup extends FlexItemGroup {
             final TextComponent link = new TextComponent("To access the documentation Wiki, please click here");
             link.setColor(ChatColor.YELLOW);
             link.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://sefiraat.dev/"));
-            player.spigot().sendMessage(link);
+
+            // use Adventure Component if available, otherwise fallback to legacy spigot send (suppressed)
+            sendClickableMessage(player, link);
             return false;
         });
 
@@ -142,5 +146,28 @@ public class MainFlexGroup extends FlexItemGroup {
         profile.getGuideHistory().add(this, 1);
         SlimefunGuide.openItemGroup(profile, itemGroup, mode, page);
         return false;
+    }
+
+    // -----------------------
+    // Compatibility helper
+    // -----------------------
+
+    private static void sendClickableMessage(Player player, TextComponent text) {
+        try {
+            // Try to convert to Adventure Component and send via Player#sendMessage(Component)
+            Component comp = LegacyComponentSerializer.legacySection().deserialize(text.getText());
+            player.sendMessage(comp);
+        } catch (NoSuchMethodError | AbstractMethodError e) {
+            // Older runtime: fallback to legacy spigot send (suppressed deprecation)
+            sendLegacySpigot(player, text);
+        } catch (Throwable t) {
+            // If anything else goes wrong, fallback to plain text sendMessage to avoid crashing.
+            player.sendMessage(text.getText());
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private static void sendLegacySpigot(Player player, TextComponent text) {
+        player.spigot().sendMessage(text);
     }
 }

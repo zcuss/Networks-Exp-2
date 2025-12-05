@@ -12,6 +12,7 @@ import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class HudCallbacks {
     private static final String EMPTY = "&7| Empty";
@@ -51,10 +52,40 @@ public class HudCallbacks {
         ItemMeta meta = itemStack.getItemMeta();
         String amountStr = HudBuilder.getAbbreviatedNumber(amount);
         String limitStr = HudBuilder.getAbbreviatedNumber(limit);
-        String itemName = meta != null && meta.hasDisplayName()
-                ? meta.getDisplayName()
-                : ChatUtils.humanize(itemStack.getType().name());
+
+        String itemName;
+        if (meta != null && meta.hasDisplayName()) {
+            /*
+             * Prefer the Adventure Component API when available:
+             * - meta.displayName() returns a Component on modern runtimes.
+             * - LegacyComponentSerializer converts it to legacy text with color codes.
+             *
+             * Fallback to legacyDisplayNameFallback(meta) if displayName() isn't present
+             * (to remain compatible with older runtimes). The fallback method is annotated
+             * with @SuppressWarnings("deprecation") to avoid deprecation warnings.
+             */
+            try {
+                itemName = LegacyComponentSerializer.legacySection().serialize(meta.displayName());
+            } catch (NoSuchMethodError | AbstractMethodError e) {
+                // Older runtime where displayName() isn't available: fallback to deprecated method (suppressed).
+                itemName = legacyDisplayNameFallback(meta);
+            } catch (Throwable t) {
+                // Any other unexpected issue: fallback to type name
+                itemName = ChatUtils.humanize(itemStack.getType().name());
+            }
+        } else {
+            itemName = ChatUtils.humanize(itemStack.getType().name());
+        }
 
         return "&7| &f" + itemName + " &7| " + amountStr + "/" + limitStr;
+    }
+
+    /**
+     * Use a single suppressed-deprecation helper so the rest of the code doesn't
+     * trigger IDE/compiler deprecation warnings for getDisplayName().
+     */
+    @SuppressWarnings("deprecation")
+    private static String legacyDisplayNameFallback(ItemMeta meta) {
+        return meta.getDisplayName();
     }
 }

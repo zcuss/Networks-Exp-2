@@ -26,6 +26,8 @@ import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
 import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -146,11 +148,18 @@ public class NetworkQuantumStorage extends SlimefunItem implements DistinctiveIt
     }
 
     private static boolean isBlacklisted(@Nonnull ItemStack itemStack) {
+        SlimefunItem sf = SlimefunItem.getByItem(itemStack);
+
+        // Blok item INFINITY_STORAGE berdasarkan ID Slimefun
+        final boolean isInfinityStorage = sf != null && "INFINITY_STORAGE".equalsIgnoreCase(sf.getId());
+
         return itemStack.getType() == Material.AIR
                 || itemStack.getType().getMaxDurability() < 0
                 || Tag.SHULKER_BOXES.isTagged(itemStack.getType())
-                || SlimefunItem.getByItem(itemStack) instanceof NetworkQuantumStorage;
+                || sf instanceof NetworkQuantumStorage
+                || isInfinityStorage;
     }
+
 
     @ParametersAreNonnullByDefault
     @Nullable
@@ -203,17 +212,26 @@ public class NetworkQuantumStorage extends SlimefunItem implements DistinctiveIt
         } else {
             final ItemStack itemStack = cache.getItemStack().clone();
             final ItemMeta itemMeta = itemStack.getItemMeta();
-            final List<String> lore = itemMeta.hasLore() ? itemMeta.getLore() : new ArrayList<>();
-            lore.add("");
-            lore.add(Theme.CLICK_INFO + "Voiding: " + Theme.PASSIVE + StringUtils.toTitleCase(String.valueOf(cache.isVoidExcess())));
-            lore.add(Theme.CLICK_INFO + "Amount: " + Theme.PASSIVE + cache.getAmount());
+
+            // gunakan Component (Adventure) untuk lore
+            List<Component> loreComponents = itemMeta != null && itemMeta.lore() != null
+                    ? new ArrayList<>(itemMeta.lore())
+                    : new ArrayList<>();
+
+            loreComponents.add(Component.empty());
+            loreComponents.add(LegacyComponentSerializer.legacySection().deserialize(Theme.CLICK_INFO + "Voiding: " + Theme.PASSIVE + StringUtils.toTitleCase(String.valueOf(cache.isVoidExcess()))));
+            loreComponents.add(LegacyComponentSerializer.legacySection().deserialize(Theme.CLICK_INFO + "Amount: " + Theme.PASSIVE + cache.getAmount()));
             if (cache.supportsCustomMaxAmount()) {
                 // Cache limit is set at the potentially custom max amount set
                 // The player could set the custom maximum amount to be the actual maximum amount
-                lore.add(Theme.CLICK_INFO + "Capacity: " + Theme.SUCCESS + cache.getLimit());
+                loreComponents.add(LegacyComponentSerializer.legacySection().deserialize(Theme.CLICK_INFO + "Capacity: " + Theme.SUCCESS + cache.getLimit()));
             }
-            itemMeta.setLore(lore);
-            itemStack.setItemMeta(itemMeta);
+
+            if (itemMeta != null) {
+                itemMeta.lore(loreComponents);
+                itemStack.setItemMeta(itemMeta);
+            }
+
             itemStack.setAmount(1);
             menu.replaceExistingItem(ITEM_SLOT, itemStack);
         }
@@ -584,21 +602,21 @@ public class NetworkQuantumStorage extends SlimefunItem implements DistinctiveIt
         } else {
             final ItemStack clone = itemStack.clone();
             final ItemMeta itemMeta = clone.getItemMeta();
-            final List<String> lore = itemMeta.getLore();
-            for (int i = 0; i < 3; i++) {
-                if (lore != null && lore.size() == 0) {
-                    break;
-                }
-                lore.remove(lore.size() - 1);
+            List<Component> loreComponents = itemMeta != null && itemMeta.lore() != null ? new ArrayList<>(itemMeta.lore()) : new ArrayList<>();
+
+            // remove up to 3 trailing lore lines (older format), safely
+            for (int i = 0; i < 3 && !loreComponents.isEmpty(); i++) {
+                loreComponents.remove(loreComponents.size() - 1);
             }
 
-            if (supportsCustomMaxAmount) {
-                if (!lore.isEmpty()) {
-                    lore.remove(lore.size() - 1);
-                }
+            if (supportsCustomMaxAmount && !loreComponents.isEmpty()) {
+                loreComponents.remove(loreComponents.size() - 1);
             }
-            itemMeta.setLore(lore.isEmpty() ? null : lore);
-            clone.setItemMeta(itemMeta);
+
+            if (itemMeta != null) {
+                itemMeta.lore(loreComponents.isEmpty() ? null : loreComponents);
+                clone.setItemMeta(itemMeta);
+            }
 
             final QuantumCache cache = new QuantumCache(clone, amount, maxAmount, voidExcess);
 

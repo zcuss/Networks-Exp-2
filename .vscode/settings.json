@@ -1,0 +1,6 @@
+{
+    "java.compile.nullAnalysis.mode": "disabled",
+    "java.configuration.updateBuildConfiguration": "disabled",
+    "java.errors.incompleteClasspath.severity": "ignore",
+    "java.compile.unused": "disabled"
+}

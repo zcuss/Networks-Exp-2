@@ -15,15 +15,15 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.updater.BlobBuildUpdater;
 import lombok.Getter;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.CraftWorld;
-import org.bukkit.craftbukkit.block.CraftBlock;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -108,23 +108,41 @@ public class Networks extends JavaPlugin implements SlimefunAddon {
                 5, Slimefun.getTickerTask().getTickRate()
         );
 
+        // Replace NMS usage with Bukkit API calls to support Paper 1.20.4 without craftbukkit imports
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             for (Location c : controllersSet) {
                 if (BlockStorage.check(c) instanceof NetworkController) {
-                    CraftBlock cb = ((CraftBlock) c.getBlock());
-                    CraftWorld cw = ((CraftWorld) c.getWorld());
+                    // Use Bukkit API instead of CraftBlock / CraftWorld / NMS
+                    Block block = c.getBlock();
+                    World world = c.getWorld();
 
-                    ServerLevel level = cw.getHandle();
-                    LevelLightEngine ll = level.chunkSource.getLightEngine();
+                    // Drop the item where the block is
+                    world.dropItemNaturally(block.getLocation(), Converter.getItem(NetworksSlimefunItemStacks.NETWORK_CONTROLLER));
 
-                    Bukkit.getScheduler().runTask(this, () -> {
-                        cw.dropItemNaturally(cb.getLocation(), Converter.getItem(NetworksSlimefunItemStacks.NETWORK_CONTROLLER));
+                    // Set the block to air without causing physics (second param 'false' to avoid physics)
+                    block.setType(Material.AIR, false);
 
-                        level.setBlock(cb.getPosition(), Blocks.AIR.defaultBlockState(), 0);
-                        level.getMinecraftWorld().sendBlockUpdated(cb.getPosition(), cb.getNMS(), Blocks.AIR.defaultBlockState(), 3);
-                        ll.checkBlock(cb.getPosition());
-                    });
+                    // Notify all players in the world about the block change (client-only visual update)
+                    try {
+                        BlockData airData = Material.AIR.createBlockData();
+                        for (Player pl : world.getPlayers()) {
+                            // send client-side block change so they immediately see the update
+                            pl.sendBlockChange(block.getLocation(), airData);
+                        }
+                    } catch (NoSuchMethodError | UnsupportedOperationException ignored) {
+                        // ignore if runtime doesn't support sending client-only block changes
+                    }
 
+                    // Optionally refresh the chunk to encourage lighting/visual updates (heavier)
+                    try {
+                        int cx = block.getX() >> 4;
+                        int cz = block.getZ() >> 4;
+                        // refreshChunk is heavier; call only if necessary
+                        world.refreshChunk(cx, cz);
+                    } catch (Throwable ignored) {
+                    }
+
+                    // Clear storage info and network data
                     BlockStorage.clearBlockInfo(c);
                     NetworkUtils.clearNetwork(c);
                 }

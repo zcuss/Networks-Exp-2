@@ -277,7 +277,7 @@ public class NetworkRoot extends NetworkNode {
 
     public void registerNode(@NotNull Location location, @NotNull NodeType type) {
         nodeLocations.add(location);
-        switch (type) {
+                switch (type) {
             case CONTROLLER -> this.controller = location;
             case BRIDGE -> bridges.add(location);
             case STORAGE_MONITOR -> monitors.add(location);
@@ -288,6 +288,7 @@ public class NetworkRoot extends NetworkNode {
             case GRABBER -> grabbers.add(location);
             case PUSHER -> pushers.add(location);
             case PURGER -> purgers.add(location);
+            case WIPER -> purgers.add(location); // <--- tambahkan ini untuk menangani NodeType.WIPER
             case CRAFTER -> crafters.add(location);
             case POWER_NODE -> powerNodes.add(location);
             case POWER_DISPLAY -> powerDisplays.add(location);

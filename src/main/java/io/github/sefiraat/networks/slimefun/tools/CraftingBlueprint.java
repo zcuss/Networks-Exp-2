@@ -20,6 +20,10 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Blueprint item used to store a crafting recipe.
+ */
+@SuppressWarnings("deprecation")
 public class CraftingBlueprint extends UnplaceableBlock implements DistinctiveItem {
 
     public CraftingBlueprint(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.sefiraat</groupId>
     <artifactId>Networks</artifactId>
     <version>v3</version>
+    <packaging>jar</packaging>
 
     <distributionManagement>
         <repository>
@@ -50,9 +51,11 @@
     </pluginRepositories>
 
     <properties>
+        <!-- Target Java 17 for Minecraft 1.20.4 -->
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
         <sonar.projectKey>Networks</sonar.projectKey>
         <sonar.organization>sefiraat</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -69,8 +72,10 @@
     </properties>
 
     <build>
-        <finalName>${project.name} MODIFIED BY mmmjjkx ${project.version}</finalName>
+        <finalName>${project.artifactId}-${project.version}</finalName>
+
         <plugins>
+            <!-- Shade plugin (tetap) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -104,12 +109,25 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- paper-nms plugin (tetap) -->
             <plugin>
                 <groupId>ca.bkaw</groupId>
                 <artifactId>paper-nms-maven-plugin</artifactId>
                 <version>1.4.10</version>
             </plugin>
+
+            <!-- Compiler plugin explicit -->
+            <!-- Compiler plugin explicit -->
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <release>17</release>
+                </configuration>
+            </plugin>
         </plugins>
+
         <defaultGoal>clean package</defaultGoal>
         <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
 
@@ -128,7 +146,7 @@
     <repositories>
         <repository>
             <id>paper</id>
-            <url>https://repo.papermc.io/repositories/maven-public</url>
+            <url>https://repo.papermc.io/repositories/maven-public/</url>
         </repository>
         <repository>
             <id>sk89q</id>
@@ -149,21 +167,23 @@
     </repositories>
 
     <dependencies>
-        <!-- NMS -->
+        <!-- NMS: Paper NMS for 1.20.4 -->
         <dependency>
             <groupId>ca.bkaw</groupId>
             <artifactId>paper-nms</artifactId>
-            <version>1.21.8-SNAPSHOT</version>
+            <version>1.20.4-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 
-        <!-- Core -->
+        <!-- Core: Paper API 1.20.4 -->
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.21.9-R0.1-SNAPSHOT</version>
+            <version>1.20.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- Slimefun (biarkan jika kompatibel) -->
         <dependency>
             <groupId>com.github.Slimefun</groupId>
             <artifactId>Slimefun4</artifactId>
@@ -176,6 +196,8 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!-- Internal libraries -->
         <dependency>
             <groupId>dev.sefiraat</groupId>
             <artifactId>SefiLib</artifactId>
@@ -242,4 +264,5 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
 </project>

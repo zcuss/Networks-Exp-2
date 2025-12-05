@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @UtilityClass
+@SuppressWarnings("deprecation")
 public class StackUtils {
     @Nonnull
     public static ItemStack getAsQuantity(@Nonnull ItemStack itemStack, int amount) {

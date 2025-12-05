@@ -19,7 +19,9 @@ import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -60,17 +62,34 @@ public abstract class AbstractGrid extends NetworkObject {
             Theme.CLICK_INFO.getColor() + "Set Filter (Right Click to Clear)"
     );
 
+    // Helper untuk mengubah legacy-colored String (dengan kode warna §/#) menjadi plain text tanpa warna
+    private static String stripLegacyColor(String legacy) {
+        if (legacy == null) return "";
+        final Component comp = LegacyComponentSerializer.legacySection().deserialize(legacy);
+        return PlainTextComponentSerializer.plainText().serialize(comp);
+    }
+
+    // Helper untuk mengubah Component menjadi plain text
+    private static String componentToPlain(@Nullable Component component) {
+        if (component == null) return "";
+        return PlainTextComponentSerializer.plainText().serialize(component);
+    }
+
     private static final Comparator<Map.Entry<ItemStack, Integer>> ALPHABETICAL_SORT = Comparator.comparing(
             itemStackIntegerEntry -> {
                 ItemStack itemStack = itemStackIntegerEntry.getKey();
                 SlimefunItem slimefunItem = SlimefunItem.getByItem(itemStack);
                 if (slimefunItem != null) {
-                    return ChatColor.stripColor(slimefunItem.getItemName());
+                    // slimefunItem.getItemName() biasanya mengandung warna legacy -> strip dan kembalikan plain
+                    return stripLegacyColor(slimefunItem.getItemName());
                 } else {
                     ItemMeta itemMeta = itemStackIntegerEntry.getKey().getItemMeta();
-                    return itemMeta.hasDisplayName()
-                            ? ChatColor.stripColor(itemMeta.getDisplayName())
-                            : itemStackIntegerEntry.getKey().getType().name();
+                    if (itemMeta != null && itemMeta.hasDisplayName()) {
+                        // itemMeta.displayName() adalah Component, ekstrak plain textnya
+                        return componentToPlain(itemMeta.displayName());
+                    } else {
+                        return itemStackIntegerEntry.getKey().getType().name();
+                    }
                 }
             }
     );
@@ -116,11 +135,16 @@ public abstract class AbstractGrid extends NetworkObject {
     }
 
     @Nonnull
-    private static List<String> getLoreAddition(int amount) {
-        final MessageFormat format = new MessageFormat("{0}Amount: {1}{2}", Locale.ROOT);
+    private static List<Component> getLoreAddition(int amount) {
+        // Kita gunakan MessageFormat serupa, namun hasilnya akan di-deserialize sebagai legacy -> component
+        // agar konsisten dengan Theme.* yang nampaknya menggunakan kode warna legacy.
+        String prefix = Theme.CLICK_INFO.getColor() + "";
+        String passive = Theme.PASSIVE.getColor() + "";
+        String formatted = MessageFormat.format("{0}Amount: {1}{2}", prefix, passive, amount);
+
         return List.of(
-                "",
-                format.format(new Object[]{Theme.CLICK_INFO.getColor(), Theme.PASSIVE.getColor(), amount}, new StringBuffer(), null).toString()
+                Component.text(""),
+                LegacyComponentSerializer.legacySection().deserialize(formatted)
         );
     }
 
@@ -186,16 +210,20 @@ public abstract class AbstractGrid extends NetworkObject {
                 final Map.Entry<ItemStack, Integer> entry = validEntries.get(i);
                 final ItemStack displayStack = entry.getKey().clone();
                 final ItemMeta itemMeta = displayStack.getItemMeta();
-                List<String> lore = itemMeta.getLore();
 
-                if (lore == null) {
-                    lore = getLoreAddition(entry.getValue());
+                // migrate lore handling ke Component
+                List<Component> loreComponents = itemMeta != null ? itemMeta.lore() : null;
+                if (loreComponents == null) {
+                    loreComponents = new ArrayList<>(getLoreAddition(entry.getValue()));
                 } else {
-                    lore.addAll(getLoreAddition(entry.getValue()));
+                    loreComponents.addAll(getLoreAddition(entry.getValue()));
                 }
 
-                itemMeta.setLore(lore);
-                displayStack.setItemMeta(itemMeta);
+                if (itemMeta != null) {
+                    itemMeta.lore(loreComponents);
+                    displayStack.setItemMeta(itemMeta);
+                }
+
                 blockMenu.replaceExistingItem(getDisplaySlots()[i], displayStack);
                 blockMenu.addMenuClickHandler(getDisplaySlots()[i], (player, slot, item, action) -> {
                     retrieveItem(player, definition, item, action, blockMenu);
@@ -227,8 +255,9 @@ public abstract class AbstractGrid extends NetworkObject {
                     String name = itemStack.getType().name().toLowerCase(Locale.ROOT);
                     if (itemStack.hasItemMeta()) {
                         final ItemMeta itemMeta = itemStack.getItemMeta();
-                        if (itemMeta.hasDisplayName()) {
-                            name = ChatColor.stripColor(itemMeta.getDisplayName().toLowerCase(Locale.ROOT));
+                        if (itemMeta != null && itemMeta.hasDisplayName()) {
+                            // gunakan Component -> plain text untuk menggantikan ChatColor.stripColor(...)
+                            name = componentToPlain(itemMeta.displayName()).toLowerCase(Locale.ROOT);
                         }
                     }
                     return name.contains(cache.getFilter());
@@ -263,12 +292,24 @@ public abstract class AbstractGrid extends NetworkObject {
 
         final ItemStack clone = itemStack.clone();
         final ItemMeta cloneMeta = clone.getItemMeta();
-        final List<String> cloneLore = cloneMeta.getLore();
 
-        cloneLore.remove(cloneLore.size() - 1);
-        cloneLore.remove(cloneLore.size() - 1);
-        cloneMeta.setLore(cloneLore);
-        clone.setItemMeta(cloneMeta);
+        // pindahkan lore handling ke Component
+        List<Component> cloneLore = cloneMeta != null ? cloneMeta.lore() : null;
+        if (cloneLore == null) {
+            // unexpected, but safeguard
+            cloneLore = new ArrayList<>();
+        }
+        // remove last two entries (Amount lines) safely
+        if (cloneLore.size() >= 2) {
+            cloneLore.remove(cloneLore.size() - 1);
+            cloneLore.remove(cloneLore.size() - 1);
+        }
+
+        if (cloneMeta != null) {
+            cloneMeta.lore(cloneLore);
+            clone.setItemMeta(cloneMeta);
+        }
+
         int amount = 1;
 
         if (action.isRightClicked()) {
