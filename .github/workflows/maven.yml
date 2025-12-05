@@ -30,6 +30,23 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      # === Tambahan: download & install Paper ke local Maven repo ===
+      - name: Download Paper 1.20.4 build 499
+        run: |
+          curl -L -o paper-1.20.4-499.jar \
+            https://api.papermc.io/v2/projects/paper/versions/1.20.4/builds/499/downloads/paper-1.20.4-499.jar
+
+      - name: Install Paper as ca.bkaw:paper-nms:1.20.4-SNAPSHOT
+        run: |
+          mvn org.apache.maven.plugins:maven-install-plugin:3.1.2:install-file \
+            -Dfile=paper-1.20.4-499.jar \
+            -DgroupId=ca.bkaw \
+            -DartifactId=paper-nms \
+            -Dversion=1.20.4-SNAPSHOT \
+            -Dpackaging=jar \
+            -DgeneratePom=true
+
+      # === Build utama ===
       - name: Build with Maven
         run: mvn -U -DskipTests=true clean package
 
