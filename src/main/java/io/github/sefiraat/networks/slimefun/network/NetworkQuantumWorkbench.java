@@ -108,26 +108,19 @@ public class NetworkQuantumWorkbench extends SlimefunItem {
     }
 
     public void craft(@Nonnull BlockMenu menu) {
+        // Ambil item di output
         final ItemStack itemInOutput = menu.getItemInSlot(OUTPUT_SLOT);
 
-        // Quick escape, we only allow crafting if the output is empty
-        if (itemInOutput != null) {
-            return;
-        }
-
+        // Ambil input dari slot resep
         final ItemStack[] inputs = new ItemStack[RECIPE_SLOTS.length];
         int i = 0;
-
-        // Fill the inputs
         for (int recipeSlot : RECIPE_SLOTS) {
-            ItemStack stack = menu.getItemInSlot(recipeSlot);
-            inputs[i] = stack;
+            inputs[i] = menu.getItemInSlot(recipeSlot);
             i++;
         }
 
+        // Cari resep yang cocok
         ItemStack crafted = null;
-
-        // Go through each recipe, test and set the ItemStack if found
         for (Map.Entry<ItemStack[], ItemStack> entry : RECIPES.entrySet()) {
             if (testRecipe(inputs, entry.getKey())) {
                 crafted = entry.getValue().clone();
@@ -135,34 +128,75 @@ public class NetworkQuantumWorkbench extends SlimefunItem {
             }
         }
 
-        if (crafted != null) {
-            final ItemStack coreItem = inputs[4];
-            final SlimefunItem oldQuantum = SlimefunItem.getByItem(coreItem);
+        if (crafted == null) {
+            return; // tidak ada resep cocok
+        }
 
-            if (oldQuantum instanceof NetworkQuantumStorage) {
-                final ItemMeta oldMeta = coreItem.getItemMeta();
-                final ItemMeta newMeta = crafted.getItemMeta();
-                final NetworkQuantumStorage newQuantum = (NetworkQuantumStorage) SlimefunItem.getByItem(crafted);
-                final QuantumCache oldCache = DataTypeMethods.getCustom(oldMeta, Keys.QUANTUM_STORAGE_INSTANCE, PersistentQuantumStorageType.TYPE);
+        // Transfer metadata Quantum jika perlu (sama seperti logika sebelumnya)
+        final ItemStack coreItem = inputs[4]; // core berada di tengah resep
+        final SlimefunItem oldQuantum = SlimefunItem.getByItem(coreItem);
 
-                if (oldCache != null) {
-                    final QuantumCache newCache = new QuantumCache(
-                            oldCache.getItemStack().clone(),
-                            oldCache.getAmount(),
-                            newQuantum.getMaxAmount(),
-                            oldCache.isVoidExcess()
-                    );
-                    DataTypeMethods.setCustom(newMeta, Keys.QUANTUM_STORAGE_INSTANCE, PersistentQuantumStorageType.TYPE, newCache);
-                    newCache.addMetaLore(newMeta);
-                    crafted.setItemMeta(newMeta);
-                }
+        if (oldQuantum instanceof NetworkQuantumStorage) {
+            final ItemMeta oldMeta = coreItem.getItemMeta();
+            final ItemMeta newMeta = crafted.getItemMeta();
+            final NetworkQuantumStorage newQuantum = (NetworkQuantumStorage) SlimefunItem.getByItem(crafted);
+            final QuantumCache oldCache = DataTypeMethods.getCustom(oldMeta, Keys.QUANTUM_STORAGE_INSTANCE, PersistentQuantumStorageType.TYPE);
+
+            if (oldCache != null) {
+                final QuantumCache newCache = new QuantumCache(
+                        oldCache.getItemStack().clone(),
+                        oldCache.getAmount(),
+                        newQuantum.getMaxAmount(),
+                        oldCache.isVoidExcess()
+                );
+                DataTypeMethods.setCustom(newMeta, Keys.QUANTUM_STORAGE_INSTANCE, PersistentQuantumStorageType.TYPE, newCache);
+                newCache.addMetaLore(newMeta);
+                crafted.setItemMeta(newMeta);
             }
+        }
 
-            menu.pushItem(crafted, OUTPUT_SLOT);
-            for (int recipeSlot : RECIPE_SLOTS) {
-                if (menu.getItemInSlot(recipeSlot) != null) {
-                    menu.consumeItem(recipeSlot, 1, true);
-                }
+        // Jumlah yang dihasilkan per satu kali craft (biasanya 1)
+        int perCraftAmount = Math.max(1, crafted.getAmount());
+
+        // Pastikan semua slot input punya minimal 1 item (kita hanya craft 1x)
+        for (int recipeSlot : RECIPE_SLOTS) {
+            ItemStack s = menu.getItemInSlot(recipeSlot);
+            if (s == null || s.getAmount() <= 0) {
+                return; // ada slot kosong / tidak cukup bahan -> batal
+            }
+        }
+
+        // Batas keras per-slot output
+        final int HARD_MAX = 64;
+
+        // Cek apakah output boleh diisi / ditumpuk
+        if (itemInOutput == null) {
+            // kosong: pastikan kita bisa menaruh perCraftAmount sampai HARD_MAX
+            if (perCraftAmount > HARD_MAX) {
+                return; // hasil craft melebihi batas per-slot
+            }
+        } else {
+            // ada item di output: hanya boleh ditumpuk jika sama
+            if (!SlimefunUtils.isItemSimilar(itemInOutput, crafted, true, false, false)) {
+                return; // beda item -> batal
+            }
+            int effectiveMaxStack = Math.min(HARD_MAX, itemInOutput.getMaxStackSize());
+            if (itemInOutput.getAmount() + perCraftAmount > effectiveMaxStack) {
+                return; // tidak ada ruang cukup untuk satu craft -> batal
+            }
+        }
+
+        // Siapkan ItemStack untuk dimasukkan (hanya 1x craft)
+        ItemStack toPush = crafted.clone();
+        toPush.setAmount(perCraftAmount);
+
+        // Masukkan ke output (menu.pushItem biasanya akan menambah/menggabungkan stack)
+        menu.pushItem(toPush, OUTPUT_SLOT);
+
+        // Konsumsi bahan: 1 unit per slot (satu kali craft)
+        for (int recipeSlot : RECIPE_SLOTS) {
+            if (menu.getItemInSlot(recipeSlot) != null) {
+                menu.consumeItem(recipeSlot, 1, true);
             }
         }
     }
